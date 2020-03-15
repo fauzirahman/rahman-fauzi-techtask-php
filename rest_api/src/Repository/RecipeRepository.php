@@ -144,7 +144,7 @@ class RecipeRepository extends ServiceEntityRepository
         foreach ($data_recipe as &$row)   
         { 
             if (!array_key_exists($coloumn, $row)) { 
-                return false; 
+                return $data_recipe; 
             } else{
                unset($row[$coloumn]);
             }
