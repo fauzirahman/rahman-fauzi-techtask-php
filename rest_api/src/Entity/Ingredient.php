@@ -27,7 +27,7 @@ class Ingredient
     /**
      * @ORM\Column(type="date")
      */
-    private $bestBeforeDate;
+    private $bestBefore;
 
     /**
      * @ORM\Column(type="date")
@@ -52,14 +52,14 @@ class Ingredient
     }
 
     
-    public function getBestBeforeDate(): ?\DateTimeInterface
+    public function getBestBefore(): ?\DateTimeInterface
     {
-        return $this->bestBeforeDate;
+        return $this->bestBefore;
     }
 
-    public function setBestBeforeDate(\DateTimeInterface $bestBeforeDate): self
+    public function setBestBefore(\DateTimeInterface $bestBefore): self
     {
-        $this->bestBeforeDate = $bestBeforeDate;
+        $this->bestBefore = $bestBefore;
         
         return $this;
     }

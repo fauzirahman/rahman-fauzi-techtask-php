@@ -24,44 +24,95 @@ class RecipeRepository extends ServiceEntityRepository
        $conn = $this->getEntityManager()->getConnection();
 
         $sql = 'SELECT * FROM recipe';
-        $stmt = $conn->prepare($sql);       
-        $stmt->execute();
-
+        $recipes = $conn->prepare($sql);       
+        $recipes->execute();
         
-        $arr = array();
-        
-         foreach ($stmt->fetchAll() as $key => $value) {
+        $data_recipe = array();
+        /** Loop data recipe */
+        foreach ($recipes->fetchAll() as $key => $value) {
            
             foreach (unserialize($value['ingredients']) as $k => $val) {
-                 
-                $sql2 = 'SELECT * FROM ingredient p
-                    WHERE DATE(p.use_by) > CURRENT_DATE
+                /** select data ingredient */ 
+                $sql_ing = 'SELECT * FROM ingredient p
+                    WHERE DATE(p.use_by) >= CURRENT_DATE
                     AND p.title like "%'.$val.'%"
-                    ORDER BY p.best_before_date DESC
+                    ORDER BY p.best_before DESC
                 ';
                 
-                $stmt2 = $conn->prepare($sql2);
-                $stmt2->execute();
-                if(empty($stmt2->fetchAll())){ 
+                $result = $conn->prepare($sql_ing);
+                $result->execute();
+
+                /** exclude data recipe where ingredient is null or expired */ 
+                if(empty($result->fetchAll())){ 
                     $exc_recipe = $value['title'];                   
                 }
                
             }
+            
+            /** filter data valid recipe */ 
            if($exc_recipe !== $value['title']){
+
+               /** array data json recipe*/
                $format_data = array(
                    'title'=>$value['title'],
                    'ingredients'=>unserialize($value['ingredients'])
                 );
-                array_push($arr,$format_data);
+                array_push($data_recipe,$format_data);
            }
             
         }
        
-               
+             
         // returns an array of arrays (i.e. a raw data set)
-        return $arr;
+        return $data_recipe;
 
     }
+
+
+    public function RecipesSortByBestUse($recipes)
+    {
+       $conn = $this->getEntityManager()->getConnection();
+
+        
+        $data_recipe = array();
+        /** Loop data recipe */
+        foreach ($recipes as $key => $value) {  
+            /** Array to String */
+            $list = "'". implode("', '", $value['ingredients']) ."'";            
+                                    
+            $sql_ing = 'SELECT * FROM ingredient p
+                WHERE DATE(p.use_by) > CURRENT_DATE
+                AND p.title IN ('.$list.')
+                ORDER BY p.best_before DESC
+            ';
+            
+            $data_ing = $conn->prepare($sql_ing);
+            $data_ing->execute();
+             /** Loop data ingredients */
+            foreach ($data_ing->fetchAll() as $key_ing => $val_ing) {
+                $data[$value['title']][] = $val_ing['title'];
+                $last_best_before = $val_ing['best_before'];                               
+            }
+                            
+            $format_data = array(                        
+                'recipe'            => $value['title'],
+                'ingredients'       => $data[$value['title']],
+                'last_best_before'  => $last_best_before
+            );
+
+            /** array data recipe and ingredients */
+            array_push($data_recipe,$format_data);           
+            
+        }
+        
+        $data_recipes = array_column($data_recipe, 'last_best_before');
+		array_multisort($data_recipes, SORT_DESC, $data_recipe);	
+        
+        // returns an array of arrays (i.e. a raw data set)
+        return $data_recipe;
+
+    }
+    
 
 
     // /**

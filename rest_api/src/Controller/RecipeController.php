@@ -21,13 +21,18 @@ class RecipeController extends AbstractController
 
     public function list()
     {
-        
-        $recipes = $this->getDoctrine()
+         /** get data valid recipe */
+        $all_recipes = $this->getDoctrine()
             ->getRepository(Recipe::class)
             ->findAllRecipeHaveIngredients();
 
+         /** get data Ingredients sort by ingredient.use_by desc*/
+        $data_recipes = $this->getDoctrine()
+            ->getRepository(Recipe::class)
+            ->RecipesSortByBestUse($all_recipes);
+
+       
         
-        
-        return $this->json(['data'=>$recipes]);      
+        return $this->json(['data'=>$data_recipes]);      
     }
 }
